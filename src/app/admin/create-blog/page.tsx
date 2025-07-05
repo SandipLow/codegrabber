@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { ID, databases } from '@/lib/appwrite';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Pen, FileText, Tag, Image, Save } from 'lucide-react';
 import Editor from 'react-simple-code-editor';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -37,7 +37,6 @@ const COLLECTION_ID = 'blogposts';
 export default function CreateBlogPage() {
     const { user } = useAuth();
     const { theme } = useTheme();
-    const editSlug = useSearchParams().get('edit');
     const [postId, setPostId] = useState<string | null>(null);
     const [blogPost, setBlogPost] = useState<Partial<BlogPostData>>({
         title: '',
@@ -53,6 +52,9 @@ export default function CreateBlogPage() {
 
     
     useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const editSlug = params.get('editSlug') || undefined;
+
         if (!editSlug) return;
 
         const fetchPost = async () => {
@@ -90,7 +92,7 @@ export default function CreateBlogPage() {
 
         fetchPost();
 
-    }, [editSlug]);
+    }, []);
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -417,14 +419,24 @@ export default function CreateBlogPage() {
                                     </button>
                                 </>
                             ) : (
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`w-full p-2 bg-blue-600 dark:bg-blue-400 text-white dark:text-gray-900 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400 flex items-center justify-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                    aria-label="Create blog post"
-                                >
-                                    <Save className="w-4 h-4 mr-2" /> {loading ? 'Creating...' : 'Create Post'}
-                                </button>
+                                <>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className={`w-full p-2 bg-blue-600 dark:bg-blue-400 text-white dark:text-gray-900 rounded-md hover:bg-blue-700 dark:hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400 flex items-center justify-center ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        aria-label="Create blog post"
+                                    >
+                                        <Save className="w-4 h-4 mr-2" /> {loading ? 'Creating...' : 'Create Post'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="w-full p-2 bg-gray-600 dark:bg-gray-400 text-white dark:text-gray-900 rounded-md hover:bg-gray-700 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-600 dark:focus:ring-gray-400 flex items-center justify-center mt-2"
+                                        onClick={() => router.push('/admin/create-blog')}
+                                        aria-label="New blog post"
+                                    >
+                                        <Pen className="w-4 h-4 mr-2" /> New Blog Post
+                                    </button>
+                                </>
                             )
                         }
                     </div>

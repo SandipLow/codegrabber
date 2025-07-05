@@ -3,8 +3,9 @@ import { Query } from 'appwrite';
 import { notFound } from 'next/navigation';
 import BlogPageClient from './_page';
 
-export default async function BlogPage({ params }: { params: { slug: string } }) {
-    const decodedSlug = decodeURIComponent(params.slug);
+
+export default async function BlogPage({ params }: { params: Promise<{ slug: string }> }) {
+    const decodedSlug = decodeURIComponent((await params).slug);
 
     try {
         const res = await databases.listDocuments('main', 'blogposts', [
@@ -30,7 +31,7 @@ export default async function BlogPage({ params }: { params: { slug: string } })
             author: {
                 id: doc.user.$id,
                 createdAt: doc.user.$createdAt,
-                
+
                 username: doc.user.username,
                 bio: doc.user.bio || '',
                 profilePicture: doc.user.profilePicture || '',

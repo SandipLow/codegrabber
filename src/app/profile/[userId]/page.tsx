@@ -5,15 +5,11 @@ import { notFound } from 'next/navigation';
 import { Query } from 'appwrite';
 
 
-type ProfilePageProps = {
-    params: { userId: string };
-};
-
 const DATABASE_ID = 'main';
 const COLLECTION_ID = 'blogposts';
 
-export default async function ProfilePage({ params }: ProfilePageProps) {
-    const { userId } = params;
+export default async function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
+    const { userId } = await params;
     let user: Partial<UserData> | null = null;
     let posts: BlogPostData[] = [];
 
