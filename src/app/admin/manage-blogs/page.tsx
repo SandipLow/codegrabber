@@ -51,6 +51,7 @@ export default function ManageBlogs() {
                 console.error(err);
                 setError(err instanceof Error ? err.message : 'Failed to fetch blog posts.');
             } finally {
+                setError(null);
                 setLoading(false);
             }
         };

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, User, Share2, X, Facebook, MessageCircle, Twitter, Linkedin } from "lucide-react";
 import Link from "next/link";
 
+
 export default function BlogsPage() {
     const [loading, setLoading] = useState(true);
     const [blogs, setBlogs] = useState<BlogPostData[]>([]);

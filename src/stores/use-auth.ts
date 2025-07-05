@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { account, databases, ID } from '@/lib/appwrite';
-import { Permission, Role, type Models } from 'appwrite';
+import { OAuthProvider, Permission, Role, type Models } from 'appwrite';
 
 
 type UserData = {
@@ -23,6 +23,7 @@ type AuthStore = {
     signIn: (email: string, password: string) => Promise<void>;
     signUp: (email: string, password: string, username: string, profilePicture? : string, bio?: string) => Promise<void>;
     updateUser: (updates: Partial<UserData>) => Promise<void>;
+    googleSignIn?: () => Promise<void>;
 };
 
 import { persist } from 'zustand/middleware';
@@ -51,7 +52,7 @@ const useAuth = create<AuthStore>()(
                     set({ user, loading: false });
                 } catch (err: unknown) {
                     console.error('Fetch user error:', err);
-                    set({ user: null, error: err instanceof Error ? err.message : 'Error fetching user', loading: false });
+                    set({ user: null, loading: false });
                 }
             },
 
@@ -184,6 +185,24 @@ const useAuth = create<AuthStore>()(
                     set({ error: err instanceof Error ? err.message : 'Update failed', loading: false });
                 }
             },
+
+            googleSignIn: async () => {
+                set({ loading: true, error: null });
+                try {
+                    account.createOAuth2Token(
+                        OAuthProvider.Google, 
+                        `${window.location.origin}/auth/callback`,
+                        `${window.location.origin}/auth/failure`,
+                        ['email', 'profile']
+                    );
+                    
+                } catch (err: unknown) {
+                    console.error('Google SignIn error:', err);
+                    set({ error: err instanceof Error ? err.message : 'Google SignIn failed', loading: false });
+                } finally {
+                    set({ loading: false });
+                }
+            }
         }),
         {
             name: 'auth-store',

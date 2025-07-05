@@ -8,6 +8,44 @@ import { Query } from 'appwrite';
 const DATABASE_ID = 'main';
 const COLLECTION_ID = 'blogposts';
 
+
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }) {
+    const { userId } = await params;
+
+    try {
+        // Fetch user data
+        const userResponse = await databases.getDocument(
+            DATABASE_ID,
+            'users',
+            userId
+        );
+
+        if (!userResponse) {
+            return {};
+        }
+
+        return {
+            title: `${userResponse.username} | CodeGrabber`,
+            description: userResponse.bio || 'No bio available.',
+            openGraph: {
+                title: `${userResponse.username} | CodeGrabber`,
+                description: userResponse.bio || 'No bio available.',
+                images: [userResponse.profilePicture || '/default-profile.png'],
+            },
+            twitter: {
+                card: 'summary_large_image',
+                title: `${userResponse.username} | CodeGrabber`,
+                description: userResponse.bio || 'No bio available.',
+                images: [userResponse.profilePicture || '/default-profile.png'],
+            },
+        };
+    } catch (error) {
+        console.error('Error generating metadata:', error);
+        return {};
+    }
+}
+
+
 export default async function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
     const { userId } = await params;
     let user: Partial<UserData> | null = null;
@@ -66,7 +104,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userId
 function ClientProfile({ user, posts }: { user: Partial<UserData>; posts: BlogPostData[] }) {
 
     return (
-        <main className="flex-grow py-16 px-4 sm:px-6 md:px-8">
+        <main className="flex-grow py-16 mt-4 px-4 sm:px-6 md:px-8">
             <div className="max-w-6xl mx-auto">
                 {/* User Details */}
                 <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-6 mb-8">
