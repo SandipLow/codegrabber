@@ -1,6 +1,7 @@
+import { Metadata } from 'next';
 import Page from './_page';
 
-export const metadata = {
+export const metadata: Metadata = {
     title: 'Code Grabber',
     description:
         'Welcome to CodeGrabber, the ultimate blogging platform for coders and developers! CodeGrabber is designed to be a haven for coding enthusiasts where they can share their knowledge, insights, and experiences with the programming community.',

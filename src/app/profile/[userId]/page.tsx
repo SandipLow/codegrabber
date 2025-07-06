@@ -3,13 +3,14 @@ import { User, FileText } from 'lucide-react';
 import { databases } from '@/lib/appwrite';
 import { notFound } from 'next/navigation';
 import { Query } from 'appwrite';
+import { Metadata } from 'next';
 
 
 const DATABASE_ID = 'main';
 const COLLECTION_ID = 'blogposts';
 
 
-export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
     const { userId } = await params;
 
     try {

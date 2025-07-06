@@ -2,9 +2,10 @@ import { databases } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { notFound } from 'next/navigation';
 import BlogPageClient from './_page';
+import { Metadata } from 'next';
 
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
     const decodedSlug = decodeURIComponent((await params).slug);
 
     try {
@@ -22,27 +23,18 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
             title: doc.title + " | CodeGrabber",
             description: doc.description,
             keywords: doc.tags.join(', '),
-            author: doc.user?.username,
+            authors: doc.user?.username,
             openGraph: {
                 title: doc.title,
                 description: doc.description,
-                images: [doc.coverImage],
+                images: doc.coverImage,
+                url: `https://codegrabber.dev/blogs/${doc.slug}`,
             },
             twitter: {
                 card: 'summary_large_image',
                 title: doc.title,
                 description: doc.description,
-                images: [doc.coverImage],
-            },
-            whatsapp: {
-                title: doc.title,
-                description: doc.description,
-                image: doc.coverImage,
-            },
-            telegram: {
-                title: doc.title,
-                description: doc.description,
-                image: doc.coverImage,
+                images: doc.coverImage,
             }
         };
     } catch (err) {

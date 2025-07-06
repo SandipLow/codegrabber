@@ -33,7 +33,7 @@ export default function BlogPageClient({ post }: BlogPostProps) {
     };
 
     const shareLinks = () => {
-        const shareUrl = encodeURIComponent(`${window.location.origin}/blog/${post.slug}`);
+        const shareUrl = encodeURIComponent(`${window.location.origin}/blogs/${post.slug}`);
         const shareText = encodeURIComponent(`${post.title} - Check out this blog post!`);
         return [
             { name: 'WhatsApp', icon: MessageCircle, url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
