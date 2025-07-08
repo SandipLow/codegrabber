@@ -166,7 +166,7 @@ function ClientProfile({ user, posts }: { user: Partial<UserData>; posts: BlogPo
                                         >
                                             <td className="border border-gray-200 dark:border-gray-700 px-4 py-2 text-gray-900 dark:text-gray-200 font-roboto-flex">
                                                 <Link
-                                                    href={`/blog/${post.slug}`}
+                                                    href={`/blogs/${post.slug}`}
                                                     className="text-blue-600 dark:text-blue-400 hover:underline"
                                                     aria-label={`View blog post: ${post.title}`}
                                                 >

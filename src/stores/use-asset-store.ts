@@ -1,69 +1,132 @@
-// stores/useAssetStore.ts
 import { create } from 'zustand';
-import { storage, ID } from '@/lib/appwrite';
-import type { Models } from 'appwrite';
+import { account, databases, storage } from '@/lib/appwrite';
+import { ID, Models, Permission, Query } from 'appwrite';
 
-type Asset = Models.File;
+interface Asset extends Models.Document {
+    name: string;
+    userId: string;
+}
 
-type AssetStore = {
-  assets: Asset[];
-  loading: boolean;
-  error: string | null;
-  uploadAsset: (file: File) => Promise<void>;
-  fetchAssets: () => Promise<void>;
-  deleteAsset: (fileId: string) => Promise<void>;
-  getAssetUrl: (fileId: string) => string;
-};
+interface AssetStore {
+    assets: Asset[];
+    loading: boolean;
+    error: string | null;
+    fetchAssets: () => Promise<void>;
+    uploadAsset: (file: File) => Promise<void>;
+    deleteAsset: (assetId: string) => Promise<void>;
+    getAssetUrl: (assetId: string) => string;
+}
 
-const BUCKET_ID = 'user_assets';
+const useAssetStore = create<AssetStore>((set) => ({
+    assets: [],
+    loading: false,
+    error: null,
 
-const useAssetStore = create<AssetStore>((set, get) => ({
-  assets: [],
-  loading: false,
-  error: null,
+    fetchAssets: async () => {
+        try {
+            set({ loading: true, error: null });
+            // Get authenticated user
+            const user = await account.get();
+            if (!user) {
+                set({ error: 'Please log in to view your assets.', loading: false });
+                return;
+            }
+            // Fetch assets for the authenticated user
+            const response = await databases.listDocuments<Asset>(
+                'main',
+                'assets',
+                [Query.equal('userId', user.$id)]
+            );
+            set({ assets: response.documents, loading: false });
+        } catch (err) {
+            console.error('Error fetching assets:', err);
+            set({ error: 'Failed to fetch assets. Please try again.', loading: false });
+        }
+    },
 
-  uploadAsset: async (file) => {
-    set({ loading: true, error: null });
-    try {
-      await storage.createFile(BUCKET_ID, ID.unique(), file);
-      await get().fetchAssets();
-    } catch (err: unknown) {
-      console.error('Upload error:', err);
-      set({ error: err instanceof Error ? err.message : 'Upload failed' });
-    } finally {
-      set({ loading: false });
-    }
-  },
+    uploadAsset: async (file: File) => {
+        try {
+            set({ loading: true, error: null });
+            // Get authenticated user
+            const user = await account.get();
+            if (!user) {
+                set({ error: 'Please log in to upload assets.', loading: false });
+                return;
+            }
+            // Upload file to storage
+            const fileResponse = await storage.createFile(
+                'user_assets', 
+                ID.unique(), 
+                file, 
+                [
+                    Permission.read(`any`),
+                    Permission.write(`user:${user.$id}`),
+                    Permission.delete(`user:${user.$id}`),
+                    Permission.update(`user:${user.$id}`),
+                ]
+            );
+            console.log('File uploaded:', fileResponse);
+            // Create document in assets collection
+            await databases.createDocument(
+                'main',
+                'assets',
+                fileResponse.$id,
+                {
+                    name: file.name,
+                    userId: user.$id
+                },
+                [
+                    Permission.read(`user:${user.$id}`),
+                    Permission.delete(`user:${user.$id}`),
+                    Permission.update(`user:${user.$id}`),
+                ]
+            );
+            // Refresh assets
+            const response = await databases.listDocuments<Asset>(
+                'main',
+                'assets',
+                [Query.equal('userId', user.$id)]
+            );
+            set({ assets: response.documents, loading: false });
+        } catch (err) {
+            console.error('Error uploading asset:', err);
+            set({ error: 'Failed to upload asset. Please try again.', loading: false });
+        }
+    },
 
-  fetchAssets: async () => {
-    set({ loading: true, error: null });
-    try {
-      const response = await storage.listFiles(BUCKET_ID);
-      set({ assets: response.files });
-    } catch (err: unknown) {
-      console.error('Fetch error:', err);
-      set({ error: err instanceof Error ? err.message : 'Failed to fetch assets' });
-    } finally {
-      set({ loading: false });
-    }
-  },
+    deleteAsset: async (assetId: string) => {
+        try {
+            set({ loading: true, error: null });
+            // Get authenticated user
+            const user = await account.get();
+            if (!user) {
+                set({ error: 'Please log in to delete assets.', loading: false });
+                return;
+            }
+            // Get asset document to verify ownership
+            const asset = await databases.getDocument('main', 'assets', assetId);
+            if (asset.userId !== user.$id) {
+                set({ error: 'You do not have permission to delete this asset.', loading: false });
+                return;
+            }
+            // Delete file from storage
+            await storage.deleteFile('user_assets', assetId);
+            // Delete document
+            await databases.deleteDocument('main', 'assets', assetId);
+            // Update state
+            set((state) => ({
+                assets: state.assets.filter((a) => a.$id !== assetId),
+                loading: false,
+            }));
+        } catch (err) {
+            console.error('Error deleting asset:', err);
+            set({ error: 'Failed to delete asset. Please try again.', loading: false });
+        }
+    },
 
-  deleteAsset: async (fileId) => {
-    set({ loading: true, error: null });
-    try {
-      await storage.deleteFile(BUCKET_ID, fileId);
-      set({ assets: get().assets.filter((a) => a.$id !== fileId) });
-    } catch (err: unknown) {
-      console.error('Delete error:', err);
-      set({ error: err instanceof Error ? err.message : 'Delete failed' });
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  getAssetUrl: (fileId) => {
-    return storage.getFilePreview(BUCKET_ID, fileId);
-  },
+    getAssetUrl: (assetId: string) => {
+        return storage.getFileView('user_assets', assetId);
+    },
 }));
 
 export default useAssetStore;
